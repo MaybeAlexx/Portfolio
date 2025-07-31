@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alex's Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: url('https://i.pinimg.com/originals/c2/44/5d/c2445dd759cf52be7e37d294c62d730e.gif');
+      --text-color: #fff;
+      --subtext-color: #ccc;
+      --button-bg: rgba(30,30,30,0.85);
+      --button-hover: #444;
+      --blur-bg: rgba(0, 0, 0, 0.55);
+    }
+
+    [data-theme='light'] {
+      --bg-color: url('https://i.pinimg.com/originals/c2/44/5d/c2445dd759cf52be7e37d294c62d730e.gif');
+      --text-color: #111;
+      --subtext-color: #333;
+      --button-bg: rgba(240,240,240,0.9);
+      --button-hover: #ddd;
+      --blur-bg: rgba(255, 255, 255, 0.6);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-color) no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    @keyframes popup {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .popup-active {
+      animation: popup 0.4s ease;
+    }
+
+    .theme-toggle, .music-toggle {
+      position: absolute;
+      padding: 10px 20px;
+      background-color: var(--button-bg);
+      border: 2px solid #666;
+      border-radius: 30px;
+      color: var(--text-color);
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .theme-toggle:hover, .music-toggle:hover {
+      background-color: var(--button-hover);
+    }
+
+    .theme-toggle { top: 20px; right: 20px; }
+    .music-toggle { top: 70px; right: 20px; }
+
+    .page {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 1000px;
+      backdrop-filter: blur(12px);
+      background: var(--blur-bg);
+      border-radius: 20px;
+      padding: 50px 30px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    #home { display: flex; }
+
+    .intro h1 {
+      font-size: 4em;
+      font-weight: 800;
+      color: #ccc;
+    }
+
+    .intro p {
+      font-size: 1.2em;
+      color: var(--subtext-color);
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    hr {
+      border: 0;
+      height: 2px;
+      width: 60%;
+      background: #666;
+      margin: 30px auto;
+    }
+
+    .main-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .nav {
+      margin-top: 20px;
+    }
+
+    .nav button {
+      background-color: var(--button-bg);
+      border: 2px solid #666;
+      padding: 20px 60px;
+      border-radius: 50px;
+      color: var(--text-color);
+      margin: 12px;
+      cursor: pointer;
+      font-size: 1.2em;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    .nav button:hover {
+      background-color: var(--button-hover);
+    }
+
+    .socials {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 2em;
+    }
+
+    .socials a {
+      font-size: 1em;
+      padding: 12px 25px;
+      background-color: var(--button-bg);
+      border: 2px solid #666;
+      border-radius: 30px;
+      color: var(--text-color);
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .socials a:hover {
+      background-color: var(--button-hover);
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 2em 0;
+      width: 100%;
+    }
+
+    .image-grid img {
+      width: 100%;
+      border-radius: 20px;
+      border: 3px solid #444;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .image-grid img:hover {
+      transform: scale(1.03);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 15px;
+      animation: popup 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    @media (max-width: 768px) {
+      .nav button {
+        padding: 16px 40px;
+        font-size: 1em;
+      }
+
+      .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+    </style>
+</head>
+<body>
+
+  <!-- Music Player -->
+  <audio id="bg-music" src="YOUR-MP3-LINK-HERE" loop autoplay></audio>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+  <button class="music-toggle" onclick="toggleMusic()">🔊</button>
+
+  <!-- Image Modal -->
+  <div class="modal" id="imgModal" onclick="this.classList.remove('show')">
+    <img src="" alt="Full view">
+  </div>
+
+  <!-- Home Page -->
+  <div id="home" class="page popup-active">
+    <div class="intro">
+      <h1>@_Alexx.exe</h1>
+      <p>Graphics Designer</p> 
+      <p>‎ </p> 
+      <p>Hey, I'm Alex. I know how to make graphics and I usually make clothing for Roblox and have been doing it since 2024.</p>
+    </div>
+
+    <hr>
+
+    <div class="main-buttons">
+      <div class="nav">
+        <button onclick="showPage('Clothing')">Clothing</button>
+        <button onclick="showPage('Banners')">Banners</button>
+        <button onclick="showPage('Reviews')">Reviews</button>
+      </div>
+
+      <div class="socials">
+        <a href="https://discord.com/users/939750816963776573" target="_blank">Discord</a>
+        <a href="https://linktr.ee/Alex_Gaming12" target="_blank">Linktree</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clothing Page -->
+  <div id="Clothing" class="page">
+    <h1>Clothing</h1>
+    <p>Some of my best pieces.</p>
+    <div class="image-grid">
+      <img src="https://i.ibb.co/ZybYpjW/Showcase.png" alt="Showcase">
+      <img src="https://i.ibb.co/Q7fS7549/Showcase2.png" alt="Showcase2">
+      <img src="https://i.ibb.co/Z6jmBWxP/Showcase3.png" alt="Showcase3">
+      <img src="https://i.ibb.co/PsFJWcmD/Showcase4.png" alt="Showcase4">
+      <img src="https://i.ibb.co/h12cS2QY/Showcase5.png" alt="Showcase5">
+      <img src="https://i.ibb.co/MDfcTHwq/Showcase6.png" alt="Showcase6">
+    </div>
+    <div class="nav">
+      <button onclick="showPage('home')">← Back</button>
+    </div>
+  </div>
+
+  <!-- Banners Page -->
+  <div id="Banners" class="page">
+    <h1>Banners</h1>
+    <p>Here’s a glimpse at some of my recent projects and designs.</p>
+    <div class="image-grid">
+      <img src="https://i.ibb.co/WpzcbcZD/banner1.png" alt="banner1">
+      <img src="https://i.ibb.co/Mk7gDyPr/banner2.png" alt="banner2">
+      <img src="https://i.ibb.co/Fkyt0s5w/banner3.png" alt="banner3">
+      <img src="https://i.ibb.co/XZC3VbKp/Banner4.png" alt="banner4">
+    </div>
+    <div class="nav">
+      <button onclick="showPage('home')">Back</button>
+    </div>
+  </div>
+  
+ <!-- Reviews -->
+<div id="Reviews" class="page" style="backdrop-filter: blur(8px); background: rgba(17, 17, 17, 0.6); border-radius: 20px; padding: 20px;">
+  <h1>Reviews</h1>
+  <p>What people say about my work!</p>
+  <div class="image-grid">
+    <img src="https://i.ibb.co/HTKv9dHF/2-Untitled.png" alt="2-Untitled">
+    <img src="https://i.ibb.co/WWSTpTkg/32-Untitled.png" alt="32-Untitled">
+    <img src="https://i.ibb.co/6SPQKh5/432-Untitled.png" alt="432-Untitled">
+    <img src="https://i.ibb.co/YBHkcsdc/5432-Untitled.png" alt="5432-Untitled">
+    <img src="https://i.ibb.co/wFxp61mV/65432-Untitled.png" alt="65432-Untitled">
+    <img src="https://i.ibb.co/zVrmsQTp/Untitled.png" alt="Untitled">
+  </div>
+  <div class="nav">
+    <button onclick="showPage('home')">Back</button>
+  </div>
+</div>
+
+  <!-- Secret Page -->
+  <div id="secret" class="page">
+    <h1>Secret Unlocked!</h1>
+    <p>We all love 69 don't we?</p>
+    <div class="nav">
+      <button onclick="showPage('home')">Back</button>
+    </div>
+  </div>
+
+<!-- Add this inside your <script> tag -->
+<script>
+  function showPage(pageId) {
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(p => {
+      p.style.display = 'none';
+      p.classList.remove('popup-active');
+    });
+    const target = document.getElementById(pageId);
+    target.style.display = 'flex';
+    target.classList.add('popup-active');
+    
+    // Refresh image modal click handlers when switching pages
+    setupImageClickHandlers();
+  }
+
+  let code = '';
+  window.addEventListener('keydown', function (e) {
+    code += e.key;
+    if (code.length > 10) code = code.slice(-10);
+    if (code.includes('6969')) {
+      showPage('secret');
+      launchConfetti();
+    }
+  });
+
+  function launchConfetti() {
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const myConfetti = confetti.create(confettiCanvas, {
+      resize: true,
+      useWorker: true
+    });
+
+    (function frame() {
+      myConfetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 }
+      });
+      myConfetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 }
+      });
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    })();
+  }
+
+  function setupImageClickHandlers() {
+    const modal = document.getElementById('imgModal');
+    const modalImg = modal.querySelector('img');
+
+    document.querySelectorAll('.image-grid img').forEach(img => {
+      img.onclick = () => {
+        modalImg.src = img.src;
+        modal.classList.add('show');
+      };
+    });
+  }
+
+  // Call once on initial load
+  setupImageClickHandlers();
+</script>
+
+
+  <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999;"></canvas>
+</body>
+</html>
